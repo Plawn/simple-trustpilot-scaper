@@ -82,14 +82,16 @@ function sleep(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000))
 }
 
-const startPage = Number(Deno.args[0]) || 1;
+const startPage = Number(Deno.args[1]) || 1;
+const url = Deno.args[0];
 
-const baseUrl = "https://fr.trustpilot.com/review/www.laposte.fr";
+// const baseUrl = "https://fr.trustpilot.com/review/www.laposte.fr";
+console.log('doing', url);
 console.log('start page', startPage);
 
-const page1 = await doOnePage(baseUrl, startPage);
+const page1 = await doOnePage(url, startPage);
 
 for (let i = startPage + 1; i < page1.lastPage; i++) {
-  await doOnePage(baseUrl, i);
+  await doOnePage(url, i);
   await sleep(5);
 }
