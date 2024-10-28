@@ -6,6 +6,9 @@ import {
 
 const pagesXpath = '//*[@id="__next"]/div/div/main/div/div[4]/section';
 
+
+
+
 type Review = {
   content: string;
   date: string;
@@ -17,22 +20,22 @@ function load() {
 
 async function doOnePage(baseUrl: string, page: number) {
   const url = `${baseUrl}?page=${page}`;
-  // const res = await fetch(url);
-  // const text = await res.text();
+  const res = await fetch(url);
+  const text = await res.text();
 
   // for debug
-  const text = await load();
+  // const text = await load();
 
   // TOOD: parse
-  const doc = new DOMParser().parseFromString(text, "text/html");
+  const doc = new DOMParser().parseFromString(text, "text/html")!;
   let lastPage = 1;
   const reviews: Review[] = [];
   // TODO: use xpath instead
   // *[@id="__next"]/div/div/main/div/div[4]/section
   // /html/body/div[1]/div/div/main/div/div[4]/section
   const p = doc.querySelector(
-    "#__next > div > div > main > div > div.styles_mainContent__nFxAv > section",
-  );
+    "#__next > div > div > main > div",
+  )!.childNodes[4].childNodes[1];
 
   // await Deno.writeTextFile("page.html", text);
   // return;
@@ -42,9 +45,16 @@ async function doOnePage(baseUrl: string, page: number) {
       const content =
         item.childNodes[0].childNodes[0].childNodes[2].childNodes[1]
           .childNodes[1];
-      const date = item.childNodes[0].childNodes[0].childNodes[2].childNodes[1]
-        .childNodes[2];
-      reviews.push({ content: content.textContent, date: date.textContent });
+      let date: string = "";
+      try {
+        date = item.childNodes[0].childNodes[0].childNodes[2].childNodes[1]
+          .childNodes[2].textContent;
+      } catch (e) {
+        console.error("failed to handle date");
+        console.error(e);
+      }
+
+      reviews.push({ content: content.textContent, date });
     } else if (s.startsWith("styles_pagination_")) { // -> styles_pagination__6VmQv
       // console.log("found nav");
       const inner = item.childNodes[0];
@@ -72,14 +82,14 @@ function sleep(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000))
 }
 
-// const startPage = Deno.args();
-// const url = Deno.args();
+const startPage = Number(Deno.args[0]) || 1;
 
 const baseUrl = "https://fr.trustpilot.com/review/www.laposte.fr";
+console.log('start page', startPage);
 
-const page1 = await doOnePage(baseUrl, 1);
+const page1 = await doOnePage(baseUrl, startPage);
 
-for (let i = 2; i < page1.lastPage; i++) {
+for (let i = startPage + 1; i < page1.lastPage; i++) {
   await doOnePage(baseUrl, i);
-  await sleep(1);
+  await sleep(5);
 }
