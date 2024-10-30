@@ -83,15 +83,26 @@ function sleep(seconds: number) {
 }
 
 const startPage = Number(Deno.args[1]) || 1;
+const count = Number(Deno.args[2]) || -1;
 const url = Deno.args[0];
 
 // const baseUrl = "https://fr.trustpilot.com/review/www.laposte.fr";
 console.log('doing', url);
 console.log('start page', startPage);
 
+
+let currentCount = 0;
 const page1 = await doOnePage(url, startPage);
 
 for (let i = startPage + 1; i < page1.lastPage; i++) {
-  await doOnePage(url, i);
+  const { reviews } = await doOnePage(url, i);
+  currentCount += reviews.length;
+  console.log('did ', currentCount);
+  if (count !== 1) {
+    if (currentCount >= count) {
+      console.log('done, stopping');
+      break;
+    }
+  }
   await sleep(5);
 }
